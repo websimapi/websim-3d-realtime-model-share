@@ -5,10 +5,12 @@ import { TransformControls } from 'three/addons/controls/TransformControls.js';
 
 let scene, camera, renderer, controls, transformControls;
 let onTransformEndCallback;
+let onSelectionChangeCallback;
 const models = {}; // Store loaded models: { modelId: THREE.Object3D }
 
-export function initScene(canvas, onTransformEnd) {
+export function initScene(canvas, onTransformEnd, onSelectionChange) {
     onTransformEndCallback = onTransformEnd;
+    onSelectionChangeCallback = onSelectionChange;
 
     // Scene setup
     scene = new THREE.Scene();
@@ -50,7 +52,7 @@ export function initScene(canvas, onTransformEnd) {
     scene.add(transformControls);
 
     // Click listener to attach transform controls
-    renderer.domElement.addEventListener('click', (event) => {
+    renderer.domElement.addEventListener('pointerdown', (event) => {
         if (transformControls.dragging) return;
         const raycaster = new THREE.Raycaster();
         const mouse = new THREE.Vector2();
@@ -66,9 +68,19 @@ export function initScene(canvas, onTransformEnd) {
                 object = object.parent;
             }
             if (object.userData.isModelRoot) {
-                transformControls.attach(object);
+                if (transformControls.object !== object) {
+                    transformControls.attach(object);
+                    if (onSelectionChangeCallback) {
+                        onSelectionChangeCallback(object.userData.url);
+                    }
+                }
             }
         } else {
+            if (transformControls.object) {
+                 if (onSelectionChangeCallback) {
+                    onSelectionChangeCallback(null);
+                }
+            }
             transformControls.detach();
         }
     }, false);
@@ -111,6 +123,7 @@ export function addOrUpdateModel(modelData) {
         loader.load(url, (gltf) => {
             const model = gltf.scene;
             model.userData.id = id;
+            model.userData.url = url; // Store the URL for download
             model.userData.isModelRoot = true; // Mark this as the object to be transformed
             
             // Apply initial transform
@@ -152,4 +165,3 @@ export function updateModelTransformFromScene(modelId) {
     }
     return null;
 }
-

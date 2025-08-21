@@ -1,15 +1,16 @@
 import { initScene, addOrUpdateModel, removeModel, updateModelTransformFromScene } from './scene.js';
-import { setupUI, updateUserList, showLoader, hideLoader } from './ui.js';
+import { setupUI, updateUserList, showLoader, hideLoader, setupDownloadButton } from './ui.js';
 
 async function main() {
     const canvas = document.querySelector('#c');
-    const sceneObjects = initScene(canvas, onTransformEnd);
+    const sceneObjects = initScene(canvas, onTransformEnd, onSelectionChange);
 
     const room = new WebsimSocket();
     await room.initialize();
 
     // The user list needs the peers object, so we pass it during UI setup
-    setupUI(handleModelUpload, room.peers);
+    setupUI(handleModelUpload);
+    setupDownloadButton();
 
     // Initial user list render
     updateUserList(room.peers);
@@ -23,6 +24,10 @@ async function main() {
                 }
             });
         }
+    }
+
+    function onSelectionChange(modelUrl) {
+        setupDownloadButton(modelUrl);
     }
 
     async function handleModelUpload(file) {
@@ -78,4 +83,3 @@ async function main() {
 }
 
 main();
-

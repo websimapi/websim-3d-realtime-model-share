@@ -1,5 +1,6 @@
 let onUploadCallback;
 let peersData;
+let currentDownloadUrl = null;
 
 export function setupUI(onUpload, peers) {
     onUploadCallback = onUpload;
@@ -7,6 +8,36 @@ export function setupUI(onUpload, peers) {
 
     const uploadInput = document.getElementById('upload-input');
     uploadInput.addEventListener('change', handleFileSelect, false);
+}
+
+export function setupDownloadButton(url) {
+    const downloadButton = document.getElementById('download-button');
+    if (!downloadButton) return;
+
+    if (url) {
+        currentDownloadUrl = url;
+        downloadButton.classList.remove('hidden');
+        downloadButton.onclick = handleDownload;
+    } else {
+        currentDownloadUrl = null;
+        downloadButton.classList.add('hidden');
+        downloadButton.onclick = null;
+    }
+}
+
+function handleDownload() {
+    if (!currentDownloadUrl) return;
+
+    const link = document.createElement('a');
+    link.href = currentDownloadUrl;
+    
+    // Extract filename from URL
+    const filename = currentDownloadUrl.substring(currentDownloadUrl.lastIndexOf('/') + 1);
+    link.download = filename || 'model.glb';
+
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
 }
 
 function handleFileSelect(event) {
@@ -56,4 +87,3 @@ export function hideLoader() {
         loader.classList.add('hidden');
     }
 }
-
